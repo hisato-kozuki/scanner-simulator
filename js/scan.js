@@ -9,20 +9,31 @@ const ERROR_MIN_SECONDS = 0.8;
 // スキャンできる目標方向からの角度差（度）
 const ALIGNED_ANGLE = 10;
 const OPPOSITE_ANGLE = 180;
-// 完了率100%のときの不透明度（ALIGNED_ANGLE以内で1、OPPOSITE_ANGLEで0.1）を
-// 完了率0%では1/5に抑える
-const OPPOSITE_ANGLE_OPACITY = 0.1;
+// 角度係数は0度で1、180度で0.1とし、ALIGNED_ANGLE付近で大きく変化させる。
+// 緩やかな成分（0度で0.4、180度で0.1）に急な段差を足した形にする
+const FAR_FACTOR_AT_ZERO = 0.4;
+const FAR_FACTOR_AT_OPPOSITE = 0.1;
+const EDGE_WIDTH_DEGREES = 2;
+// 完了率0%では不透明度を1/5に抑える
 const OPACITY_SCALE = 0.2;
+
+function edgeAt(angle) {
+  return 1 / (1 + Math.exp((angle - ALIGNED_ANGLE) / EDGE_WIDTH_DEGREES));
+}
+
+export function angleFactor(angle) {
+  const far = FAR_FACTOR_AT_ZERO
+    + (FAR_FACTOR_AT_OPPOSITE - FAR_FACTOR_AT_ZERO) * (angle / OPPOSITE_ANGLE);
+  const edge = edgeAt(angle) / edgeAt(0);
+  return far + (1 - far) * edge;
+}
 
 export function isAligned(angle) {
   return angle <= ALIGNED_ANGLE;
 }
 
 export function opacityFor(angle, progress) {
-  const t = Math.max(0, (angle - ALIGNED_ANGLE) / (OPPOSITE_ANGLE - ALIGNED_ANGLE));
-  const smooth = t * t * (3 - 2 * t);
-  const angleFactor = 1 - (1 - OPPOSITE_ANGLE_OPACITY) * smooth;
-  return angleFactor * OPACITY_SCALE * (progress * 4 + 1);
+  return angleFactor(angle) * OPACITY_SCALE * (progress * 4 + 1);
 }
 
 export function createScanSession() {
@@ -55,7 +66,7 @@ export function createScanSession() {
         session.completed = true;
         session.error = false;
       }
-    } else if (!holding) {
+    } else {
       session.progress = Math.max(0, session.progress - dt / DECAY_SECONDS);
     }
   };
