@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>Scanner Simulator</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <video id="camera" autoplay muted playsinline></video>
+  <canvas id="stage"></canvas>
+
+  <div id="hud">
+    <header id="progress-panel">
+      <div class="progress-label">
+        <span>スキャン完了率</span>
+        <span id="progress-value">0%</span>
+      </div>
+      <div class="progress-track"><div id="progress-bar"></div></div>
+    </header>
+
+    <div id="error" class="center-text">Error</div>
+    <div id="complete" class="center-text">スキャン完了</div>
+
+    <footer id="bottom-panel">
+      <p id="notice"></p>
+      <p id="target">目標　方位 0°　仰角 45°</p>
+      <div class="readouts">
+        <div class="readout"><span class="readout-label">方位</span><span id="azimuth-value">0°</span></div>
+        <div class="readout"><span class="readout-label">仰角</span><span id="elevation-value">0°</span></div>
+      </div>
+      <button id="scan-button" type="button">長押しでスキャン</button>
+    </footer>
+  </div>
+
+  <div id="start-overlay">
+    <button id="start-button" type="button">開始</button>
+    <p>カメラと傾きセンサーを使用します</p>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

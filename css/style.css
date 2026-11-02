@@ -1,0 +1,217 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#camera,
+#stage,
+#hud,
+#start-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#camera {
+  object-fit: cover;
+  visibility: hidden;
+}
+
+#camera.active {
+  visibility: visible;
+}
+
+#stage {
+  display: block;
+  touch-action: none;
+}
+
+#hud {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding:
+    calc(env(safe-area-inset-top) + 16px)
+    16px
+    calc(env(safe-area-inset-bottom) + 16px);
+  pointer-events: none;
+}
+
+/* カメラ映像を妨げないよう、スキャンボタン以外は半透明にする */
+#progress-panel,
+.readout {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+#progress-panel {
+  padding: 8px 12px 10px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+#progress-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-track {
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+#progress-bar {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.center-text {
+  position: absolute;
+  top: 42%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+#error {
+  font-size: 44px;
+  color: #ff5a5a;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+#error.visible {
+  opacity: 0.95;
+}
+
+#complete {
+  font-size: 36px;
+  text-shadow: 0 0 16px #6fe3ff, 0 0 4px #000;
+  transition: opacity 1s ease-out;
+}
+
+#complete.visible {
+  opacity: 1;
+  transition: opacity 0.15s ease-in;
+}
+
+#bottom-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#notice,
+#target {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#notice:empty {
+  display: none;
+}
+
+.readouts {
+  display: flex;
+  gap: 10px;
+}
+
+.readout {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 12px;
+}
+
+.readout-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.readout span:last-child {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+#scan-button {
+  width: 100%;
+  height: 64px;
+  border: none;
+  border-radius: 32px;
+  background: #ffb300;
+  color: #1a1200;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  touch-action: none;
+  transition: transform 0.1s, background 0.1s;
+}
+
+#scan-button.holding {
+  background: #ffd54f;
+  transform: scale(0.97);
+}
+
+#scan-button.finished {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  box-shadow: none;
+}
+
+#start-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+
+#start-overlay[hidden] {
+  display: none;
+}
+
+#start-button {
+  padding: 14px 56px;
+  border: none;
+  border-radius: 28px;
+  background: #ffb300;
+  color: #1a1200;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+}
