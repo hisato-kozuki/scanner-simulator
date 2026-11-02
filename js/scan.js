@@ -6,25 +6,23 @@ export const GLOW_SECONDS = 0.5;
 export const MESSAGE_SECONDS = 3;
 const ERROR_MIN_SECONDS = 0.8;
 
-// 目標方向からの角度差（度）の段階。先頭の段階でのみスキャンできる。
-// held: ボタンを押している間の不透明度
-// idle: 押していない間の不透明度の基準値（完了率に応じた係数を掛けて使う）
-const OPACITY_STEPS = [
-  { within: 10, held: 1, idle: 0.2 },
-  { within: 20, held: 0.7, idle: 0.14 },
-  { within: 35, held: 0.45, idle: 0.09 },
-  { within: 60, held: 0.25, idle: 0.05 },
-  { within: 180, held: 0.1, idle: 0 },
-];
-const IDLE_PERCENT_DIVISOR = 20;
+// スキャンできる目標方向からの角度差（度）
+const ALIGNED_ANGLE = 10;
+const OPPOSITE_ANGLE = 180;
+// 完了率100%のときの不透明度（ALIGNED_ANGLE以内で1、OPPOSITE_ANGLEで0.1）を
+// 完了率0%では1/5に抑える
+const OPPOSITE_ANGLE_OPACITY = 0.1;
+const OPACITY_SCALE = 0.2;
 
 export function isAligned(angle) {
-  return angle <= OPACITY_STEPS[0].within;
+  return angle <= ALIGNED_ANGLE;
 }
 
-export function opacityFor(angle, holding, progress) {
-  const step = OPACITY_STEPS.find((candidate) => angle <= candidate.within);
-  return holding ? step.held : step.idle * (progress * 100) / IDLE_PERCENT_DIVISOR;
+export function opacityFor(angle, progress) {
+  const t = Math.max(0, (angle - ALIGNED_ANGLE) / (OPPOSITE_ANGLE - ALIGNED_ANGLE));
+  const smooth = t * t * (3 - 2 * t);
+  const angleFactor = 1 - (1 - OPPOSITE_ANGLE_OPACITY) * smooth;
+  return angleFactor * OPACITY_SCALE * (progress * 4 + 1);
 }
 
 export function createScanSession() {

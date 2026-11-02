@@ -191,7 +191,7 @@ function frame(now) {
   session.update(dt, holding, isAligned(angle));
 
   scene.setView(viewDirection);
-  scene.setCubeOpacity(session.completed ? 1 : opacityFor(angle, holding, session.progress));
+  scene.setCubeOpacity(session.completed ? 1 : opacityFor(angle, session.progress));
   scene.setGlow(session.glow);
   scene.render();
   updateHud();
