@@ -1,9 +1,13 @@
 import * as THREE from './vendor/three.module.min.js';
 import { azimuthOf, directionFromAngles, elevationOf } from './orientation.js';
 
-const LOGO_SIZE = 2.6;
+const CUBE_SIZE = 1.8;
+const CUBE_TEXTURE_SIZE = 512;
+const LOGO_PADDING_RATIO = 0.08;
+const RING_COLOR = 0x2f80ff;
+const RING_LABEL_COLOR = '#4d9bff';
 const RING_RADIUS = 1.6;
-const RING_Y = -3;
+const RING_Y = -3.2;
 const LABEL_RADIUS = RING_RADIUS + 0.38;
 const VISIBLE_HALF_WIDTH = 2.9;
 const VISIBLE_HALF_HEIGHT = 4.5;
@@ -32,17 +36,17 @@ function createLabel(text) {
     ctx.font = '700 56px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur = 8;
+    ctx.fillStyle = RING_LABEL_COLOR;
     ctx.fillText(text, 64, 64);
   });
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.75,
     depthWrite: false,
   }));
+  // 立方体の奥に回ったラベルも読めるように手前へ重ねる
+  sprite.renderOrder = 2;
   sprite.scale.setScalar(0.6);
   return sprite;
 }
@@ -50,9 +54,9 @@ function createLabel(text) {
 function createRing() {
   const group = new THREE.Group();
   const ringMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
+    color: RING_COLOR,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.55,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -69,7 +73,7 @@ function createRing() {
   }
   group.add(new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(tickPoints),
-    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }),
+    new THREE.LineBasicMaterial({ color: RING_COLOR, transparent: true, opacity: 0.55 }),
   ));
 
   for (const deg of [0, 90, 180, 270]) {
@@ -89,24 +93,26 @@ function createHeadingMarker() {
     0.13, RING_Y, -(RING_RADIUS - 0.36),
   ], 3));
   return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
-    color: 0xffb300,
+    color: RING_COLOR,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.75,
     side: THREE.DoubleSide,
     depthWrite: false,
   }));
 }
 
-function createPlaceholderLogo() {
-  return createCanvasTexture(512, 512, (ctx) => {
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 16;
-    ctx.strokeRect(16, 16, 480, 480);
+// 白地の面の中央にロゴの縦横比を保って描いたテクスチャを作る
+function createCubeFaceTexture(image) {
+  const size = CUBE_TEXTURE_SIZE;
+  return createCanvasTexture(size, size, (ctx) => {
     ctx.fillStyle = '#fff';
-    ctx.font = '700 88px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('logo.png', 256, 256);
+    ctx.fillRect(0, 0, size, size);
+    const available = size * (1 - LOGO_PADDING_RATIO * 2);
+    const scale = available / Math.max(image.width, image.height);
+    const width = image.width * scale;
+    const height = image.height * scale;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
   });
 }
 
@@ -121,7 +127,7 @@ function createGlowTexture() {
   });
 }
 
-export function createScene(canvas, targetDirection) {
+export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -134,29 +140,24 @@ export function createScene(canvas, targetDirection) {
   const headingMarker = createHeadingMarker();
   scene.add(headingMarker);
 
-  const logoMaterial = new THREE.MeshBasicMaterial({
+  const cubeMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
-    side: THREE.DoubleSide,
     depthWrite: false,
   });
   const flashMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
     opacity: 0,
-    side: THREE.DoubleSide,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
-  const logoGeometry = new THREE.PlaneGeometry(1, 1);
-  const logo = new THREE.Mesh(logoGeometry, logoMaterial);
-  const flash = new THREE.Mesh(logoGeometry, flashMaterial);
-  logo.renderOrder = 1;
-  flash.renderOrder = 2;
+  const cubeGeometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+  const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  const flash = new THREE.Mesh(cubeGeometry, flashMaterial);
+  cube.renderOrder = 1;
+  flash.renderOrder = 3;
   flash.scale.setScalar(1.04);
-  logo.add(flash);
-  scene.add(logo);
-
-  // 目標方向から見たときに正面を向くように画像を空中へ配置する
-  logo.lookAt(-targetDirection.x, -targetDirection.z, targetDirection.y);
+  cube.add(flash);
+  scene.add(cube);
 
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({
     map: createGlowTexture(),
@@ -166,27 +167,19 @@ export function createScene(canvas, targetDirection) {
     depthTest: false,
     blending: THREE.AdditiveBlending,
   }));
-  halo.scale.setScalar(LOGO_SIZE * 3.2);
-  halo.renderOrder = 3;
+  halo.scale.setScalar(CUBE_SIZE * 4.6);
+  halo.renderOrder = 4;
   scene.add(halo);
 
-  function applyLogoTexture(texture, width, height) {
+  new THREE.ImageLoader().load('image/logo.png', (image) => {
+    const texture = createCubeFaceTexture(image);
     texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    logoMaterial.map = texture;
+    cubeMaterial.map = texture;
     flashMaterial.map = texture;
-    logoMaterial.needsUpdate = true;
+    cubeMaterial.needsUpdate = true;
     flashMaterial.needsUpdate = true;
-    const scale = LOGO_SIZE / Math.max(width, height);
-    logo.scale.set(width * scale, height * scale, 1);
-    flash.scale.set(1.04, 1.04, 1);
-  }
-
-  applyLogoTexture(createPlaceholderLogo(), 1, 1);
-  new THREE.TextureLoader().load('image/logo.png', (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    applyLogoTexture(texture, texture.image.width, texture.image.height);
   }, undefined, () => {
-    console.warn('image/logo.png を読み込めないため代替画像を表示します');
+    console.warn('image/logo.png を読み込めないため白い立方体を表示します');
   });
 
   function resize() {
@@ -218,14 +211,16 @@ export function createScene(canvas, targetDirection) {
       camera.lookAt(0, 0, 0);
       headingMarker.rotation.y = -THREE.MathUtils.degToRad(azimuth);
     },
-    setLogoOpacity(opacity) {
-      logoMaterial.opacity = opacity;
+    setCubeOpacity(opacity) {
+      cubeMaterial.opacity = opacity;
     },
     setGlow(intensity) {
       flashMaterial.opacity = intensity;
       halo.material.opacity = intensity;
     },
     render() {
+      // コンテキストの消失中はシェーダーのコンパイルで例外が出るので、復帰まで描画しない
+      if (renderer.getContext().isContextLost()) return;
       renderer.render(scene, camera);
     },
   };

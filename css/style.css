@@ -164,13 +164,13 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-#scan-button {
+.action-button {
   width: 100%;
   height: 64px;
-  border: none;
+  border: 3px solid #1a73e8;
   border-radius: 32px;
-  background: #ffb300;
-  color: #1a1200;
+  background: #fff;
+  color: #1a73e8;
   font: inherit;
   font-size: 18px;
   font-weight: 700;
@@ -180,15 +180,9 @@ body {
   transition: transform 0.1s, background 0.1s;
 }
 
-#scan-button.holding {
-  background: #ffd54f;
+.action-button.holding {
+  background: #dbe9fd;
   transform: scale(0.97);
-}
-
-#scan-button.finished {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
-  box-shadow: none;
 }
 
 #start-overlay {
